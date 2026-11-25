@@ -2,11 +2,11 @@
 
 ## Sprint 0 — Foundation
 - [x] Repository
-- [ ] Frontend shell
-- [ ] Backend skeleton
-- [ ] Project configuration and env examples
-- [ ] Architecture docs
-- [ ] Local setup instructions
+- [x] Starter frontend shell
+- [x] Backend skeleton
+- [x] Project configuration and env examples
+- [x] Architecture docs
+- [ ] Local setup validation
 
 ## Sprint 1 — Gmail connection
 - Google OAuth setup
@@ -38,5 +38,5 @@
 - Export/delete controls
 - Deployment and security review
 
-## Definition of done for MVP
-A user can connect Gmail with read-only permission, run a bounded scan, review discovered hackathon emails, verify or correct extracted events, and see their activity on the dashboard—without any platform scraping.
+## MVP definition of done
+A user can connect Gmail with read-only permission, run a bounded scan, review discovered hackathon emails, verify/correct extracted events, and see activity on the dashboard without platform scraping.
