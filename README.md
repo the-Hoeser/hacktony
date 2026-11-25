@@ -5,6 +5,14 @@ HackTony is a Gmail-first personal hackathon tracker. It discovers hackathon-rel
 ## Zero-cost MVP goal
 Run the first version on free tiers. Keep Gmail access read-only, filter emails before AI extraction, deduplicate messages, and track AI usage.
 
+## Current MVP features
+- Manual hackathon tracking (name, platform, dates, status, submission link, notes)
+- Local browser persistence, search, status changes, delete, export
+- Gmail read-only OAuth discovery and review/import/dismiss queue
+- Supabase magic-link sign-in and manual cloud sync (requires Netlify env vars)
+- Owner-scoped RLS tables for tracker events and Gmail discoveries
+- CI frontend typecheck/build validation
+
 ## Roadmap
 - [ ] Sprint 0: frontend shell, backend skeleton, docs
 - [ ] Sprint 1: Google OAuth + Gmail readonly sync
