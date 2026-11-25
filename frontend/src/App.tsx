@@ -24,7 +24,8 @@ export default function App(){
   useEffect(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(events));}catch{}},[events]);
   useEffect(()=>{try{localStorage.setItem(DISCOVERY_KEY,JSON.stringify(discoveries));}catch{}},[discoveries]);
   const submitted=events.filter(e=>e.status==='Submitted'||e.status==='Completed').length;
-  const active=events.filter(e=>e.status==='Registered'||e.status==='In progress').length;\n  const achievementCount=[events.length>0,submitted>0,events.length>=5].filter(Boolean).length;
+  const active=events.filter(e=>e.status==='Registered'||e.status==='In progress').length;
+  const achievementCount=[events.length>0,submitted>0,events.length>=5].filter(Boolean).length;
   const stats=emptyStats.map((s,i)=>({...s,value:[events.length,submitted,achievementCount,active][i],note:i===0?(events.length?'Your tracked events':'Your journey starts here'):i===1?(submitted?'Submission history':'No submissions yet'):i===3?(active?'Events underway':'Nothing active yet'):s.note}));
   const filtered=useMemo(()=>events.filter(e=>(e.name+' '+e.platform+' '+e.status).toLowerCase().includes(search.toLowerCase())),[events,search]);
   function saveClientId(){const clean=clientId.trim();localStorage.setItem(CLIENT_KEY,clean);setClientId(clean);setGmailMessage(clean?'Google OAuth Client ID saved on this browser.':'Client ID cleared.');}
