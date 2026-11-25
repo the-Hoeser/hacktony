@@ -2,6 +2,9 @@
 
 [build]
   base = "frontend"
+  [build.environment]
+    VITE_SUPABASE_URL = "https://wofyhisslmokjejrtlzk.supabase.co"
+    VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_LRb0vBw2Mjt3LDL4NMVjzA_C75eTvdI"
   command = "npm run build"
   publish = "dist"
 
