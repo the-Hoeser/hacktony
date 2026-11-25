@@ -1,8 +1,8 @@
--- HackTony initial persistence schema (authenticated users own their rows)
-create table if not exists public.hackathons (
+-- HackTony-specific tables kept separate from the existing public hackathon catalogue
+create table if not exists public.hacktony_events (
   id uuid primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
-  name text not null,
+  event_name text not null,
   platform text not null default '',
   status text not null default 'Interested' check (status in ('Interested','Registered','In progress','Submitted','Completed')),
   start_date date,
@@ -12,20 +12,19 @@ create table if not exists public.hackathons (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+create index if not exists hacktony_events_user_updated_idx on public.hacktony_events(user_id, updated_at desc);
+alter table public.hacktony_events enable row level security;
+grant select, insert, update, delete on public.hacktony_events to authenticated;
+drop policy if exists "HackTony users read own events" on public.hacktony_events;
+create policy "HackTony users read own events" on public.hacktony_events for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "HackTony users insert own events" on public.hacktony_events;
+create policy "HackTony users insert own events" on public.hacktony_events for insert to authenticated with check ((select auth.uid()) = user_id);
+drop policy if exists "HackTony users update own events" on public.hacktony_events;
+create policy "HackTony users update own events" on public.hacktony_events for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "HackTony users delete own events" on public.hacktony_events;
+create policy "HackTony users delete own events" on public.hacktony_events for delete to authenticated using ((select auth.uid()) = user_id);
 
-create index if not exists hackathons_user_updated_idx on public.hackathons(user_id, updated_at desc);
-alter table public.hackathons enable row level security;
-grant select, insert, update, delete on public.hackathons to authenticated;
-drop policy if exists "Users can read their hackathons" on public.hackathons;
-create policy "Users can read their hackathons" on public.hackathons for select to authenticated using ((select auth.uid()) = user_id);
-drop policy if exists "Users can insert their hackathons" on public.hackathons;
-create policy "Users can insert their hackathons" on public.hackathons for insert to authenticated with check ((select auth.uid()) = user_id);
-drop policy if exists "Users can update their hackathons" on public.hackathons;
-create policy "Users can update their hackathons" on public.hackathons for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
-drop policy if exists "Users can delete their hackathons" on public.hackathons;
-create policy "Users can delete their hackathons" on public.hackathons for delete to authenticated using ((select auth.uid()) = user_id);
-
-create table if not exists public.gmail_discoveries (
+create table if not exists public.hacktony_gmail_discoveries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   gmail_message_id text not null,
@@ -38,15 +37,14 @@ create table if not exists public.gmail_discoveries (
   status text not null default 'pending_review' check (status in ('pending_review','imported','dismissed')),
   unique (user_id, gmail_message_id)
 );
-
-create index if not exists gmail_discoveries_user_matched_idx on public.gmail_discoveries(user_id, matched_at desc);
-alter table public.gmail_discoveries enable row level security;
-grant select, insert, update, delete on public.gmail_discoveries to authenticated;
-drop policy if exists "Users can read their email discoveries" on public.gmail_discoveries;
-create policy "Users can read their email discoveries" on public.gmail_discoveries for select to authenticated using ((select auth.uid()) = user_id);
-drop policy if exists "Users can insert their email discoveries" on public.gmail_discoveries;
-create policy "Users can insert their email discoveries" on public.gmail_discoveries for insert to authenticated with check ((select auth.uid()) = user_id);
-drop policy if exists "Users can update their email discoveries" on public.gmail_discoveries;
-create policy "Users can update their email discoveries" on public.gmail_discoveries for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
-drop policy if exists "Users can delete their email discoveries" on public.gmail_discoveries;
-create policy "Users can delete their email discoveries" on public.gmail_discoveries for delete to authenticated using ((select auth.uid()) = user_id);
+create index if not exists hacktony_gmail_user_matched_idx on public.hacktony_gmail_discoveries(user_id, matched_at desc);
+alter table public.hacktony_gmail_discoveries enable row level security;
+grant select, insert, update, delete on public.hacktony_gmail_discoveries to authenticated;
+drop policy if exists "HackTony users read own discoveries" on public.hacktony_gmail_discoveries;
+create policy "HackTony users read own discoveries" on public.hacktony_gmail_discoveries for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "HackTony users insert own discoveries" on public.hacktony_gmail_discoveries;
+create policy "HackTony users insert own discoveries" on public.hacktony_gmail_discoveries for insert to authenticated with check ((select auth.uid()) = user_id);
+drop policy if exists "HackTony users update own discoveries" on public.hacktony_gmail_discoveries;
+create policy "HackTony users update own discoveries" on public.hacktony_gmail_discoveries for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "HackTony users delete own discoveries" on public.hacktony_gmail_discoveries;
+create policy "HackTony users delete own discoveries" on public.hacktony_gmail_discoveries for delete to authenticated using ((select auth.uid()) = user_id);
