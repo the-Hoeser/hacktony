@@ -6,12 +6,12 @@ The tracker now supports passwordless Supabase Auth and a manual **Sync now** ac
 
 ### Netlify environment variables
 
-In Netlify → HackTony project → Project configuration → Environment variables, add:
+The production site already receives these **public** browser values from `netlify.toml` under `[build.environment]`:
 
-- `VITE_SUPABASE_URL` — `https://wofyhisslmokjejrtlzk.supabase.co`
-- `VITE_SUPABASE_PUBLISHABLE_KEY` — the project's publishable key (starts with `sb_publishable_`)
+- `VITE_SUPABASE_URL` — project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — publishable key (starts with `sb_publishable_`)
 
-Both are public browser values; use Build scope. Save and trigger a new deploy.
+The publishable key is intentionally client-visible and protected by the database's RLS policies. Do not replace it with a secret or service-role key. Forks can use their own project values in Netlify environment variables.
 
 ### Supabase Auth URL configuration
 
