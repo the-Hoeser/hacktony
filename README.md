@@ -5,17 +5,17 @@ HackTony is a Gmail-first personal hackathon tracker. It discovers hackathon-rel
 ## Zero-cost MVP goal
 Run the first version on free tiers. Keep Gmail access read-only, filter emails before AI extraction, deduplicate messages, and track AI usage.
 
+**Linked project tracker:** [Vilica](https://vilica.netlify.app)
+
 ## Current MVP features
 - Overview carousel with curated upcoming India hackathons, event-type filters, organiser links, and one-click add-to-tracker
 - Paste-link event import for supported public event pages, with an editable preview and manual-entry fallback
-- Overview carousel with curated upcoming India hackathons, event-type filters, organiser links, and one-click add-to-tracker
-
 - Manual hackathon tracking (name, platform, dates, status, submission link, notes)
 - Local browser persistence, search, status changes, delete, export
 - Gmail read-only historical scanning in paginated batches, grouped event candidates, and evidence-based suggested statuses
 - Supabase magic-link sign-in and manual cloud sync (requires Netlify env vars)
-- Optional RepoPulse repository links per hackathon, stored as owner-scoped integration metadata
-- Read-only RepoPulse progress summaries from its public-repository Markdown checklist endpoint; no GitHub token sharing
+- Optional Vilica repository links per hackathon, stored as owner-scoped integration metadata
+- Read-only Vilica progress summaries from its public-repository Markdown checklist endpoint; no GitHub token sharing
 - Owner-scoped RLS tables for tracker events and Gmail discoveries
 - CI frontend typecheck/build validation
 
