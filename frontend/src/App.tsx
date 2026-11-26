@@ -12,6 +12,34 @@ const DISCOVERY_KEY = 'hacktony-gmail-discoveries-v1';
 const CLIENT_KEY = 'hacktony-google-client-id';
 type Discovery = {id:string;subject:string;from:string;date:string;snippet:string;platform:string;matchedAt:string};
 
+type RepoPulseLink = { eventId:string; eventName:string; repositoryFullName:string; repositoryUrl:string; projectName:string; branch:string; linkedAt:string };
+const PROJECT_LINKS_KEY = 'hacktony-repopulse-links-v1';
+const REPOPULSE_URL_KEY = 'hacktony-repopulse-app-url-v1';
+function parseGitHubRepository(input:string){
+  try{
+    const url=new URL(input.trim());
+    if(url.protocol!=='https:'||url.hostname.toLowerCase()!=='github.com'||url.username||url.password)return null;
+    const parts=url.pathname.split('/').filter(Boolean);
+    if(parts.length!==2)return null;
+    const owner=parts[0];
+    const repo=parts[1].replace(/\.git$/i,'');
+    if(!/^[A-Za-z0-9_.-]+$/.test(owner)||! /^[A-Za-z0-9_.-]+$/.test(repo))return null;
+    return {owner,repo,fullName:owner+'/'+repo,url:'https://github.com/'+owner+'/'+repo};
+  }catch{return null;}
+}
+function buildRepoPulseDeepLink(baseUrl:string,link:RepoPulseLink){
+  try{
+    const url=new URL(baseUrl.trim());
+    if(!['https:','http:'].includes(url.protocol))return '';
+    url.searchParams.set('repo',link.repositoryFullName);
+    url.searchParams.set('source','hacktony');
+    url.searchParams.set('hackathon',link.eventName);
+    url.searchParams.set('hackathonId',link.eventId);
+    return url.toString();
+  }catch{return '';}
+}
+
+
 type DiscoveryGroup = { key:string; name:string; platform:string; messages:Discovery[]; suggestedStatus:Hackathon['status']; latestDate:string };
 const STATUS_RANK:Record<Hackathon['status'],number>={Interested:0,Registered:1,'In progress':2,Submitted:3,Completed:4};
 function normalizeEventName(value:string){
@@ -92,11 +120,20 @@ export default function App(){
   const [supabaseEmail,setSupabaseEmail] = useState('');
   const [supabaseMessage,setSupabaseMessage] = useState('');
   const [syncBusy,setSyncBusy] = useState(false);
+  const [projectLinks,setProjectLinks] = useState<RepoPulseLink[]>(()=>{try{return JSON.parse(localStorage.getItem(PROJECT_LINKS_KEY)||'[]')}catch{return []}});
+  const [repoPulseUrl,setRepoPulseUrl] = useState(()=>localStorage.getItem(REPOPULSE_URL_KEY)||'');
+  const [repoPulseMessage,setRepoPulseMessage] = useState('');
+  const [linkingEvent,setLinkingEvent] = useState<Hackathon|null>(null);
+  const [linkDraft,setLinkDraft] = useState({repositoryUrl:'',projectName:'',branch:'main'});
+
   const [draft,setDraft] = useState({name:'',platform:'Devpost',status:'Interested' as Hackathon['status'],startDate:'',endDate:'',submissionUrl:'',notes:''});
   useEffect(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)setEvents(JSON.parse(raw));}catch{}},[]);
   useEffect(()=>{if(!supabase)return;void supabase.auth.getSession().then(({data})=>setSupabaseUser(data.session?.user??null));const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>setSupabaseUser(session?.user??null));return ()=>subscription.unsubscribe();},[]);
   useEffect(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(events));}catch{}},[events]);
   useEffect(()=>{try{localStorage.setItem(DISCOVERY_KEY,JSON.stringify(discoveries));}catch{}},[discoveries]);
+  useEffect(()=>{try{localStorage.setItem(PROJECT_LINKS_KEY,JSON.stringify(projectLinks));}catch{}},[projectLinks]);
+  useEffect(()=>{try{if(repoPulseUrl)localStorage.setItem(REPOPULSE_URL_KEY,repoPulseUrl);else localStorage.removeItem(REPOPULSE_URL_KEY);}catch{}},[repoPulseUrl]);
+
   const submitted=events.filter(e=>e.status==='Submitted'||e.status==='Completed').length;
   const active=events.filter(e=>e.status==='Registered'||e.status==='In progress').length;
   const achievementCount=[events.length>0,submitted>0,events.length>=5].filter(Boolean).length;
@@ -105,7 +142,84 @@ export default function App(){
   const filtered=useMemo(()=>events.filter(e=>(e.name+' '+e.platform+' '+e.status).toLowerCase().includes(search.toLowerCase())),[events,search]);
   const groupedDiscoveries=useMemo(()=>groupDiscoveries(discoveries),[discoveries]);
   async function sendMagicLink(){if(!supabase){setSupabaseMessage('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Netlify.');return;}if(!supabaseEmail.trim()){setSupabaseMessage('Enter your email first.');return;}const {error}=await supabase.auth.signInWithOtp({email:supabaseEmail.trim(),options:{emailRedirectTo:window.location.origin}});setSupabaseMessage(error?error.message:'Magic link sent. Check your email and open the link on this browser.');}
-  async function syncCloud(){if(!supabase||!supabaseUser){setSupabaseMessage('Sign in to Supabase first.');return;}setSyncBusy(true);setSupabaseMessage('Syncing your HackTony data…');try{const eventRows=events.map(e=>({id:e.id,user_id:supabaseUser.id,event_name:e.name,platform:e.platform,status:e.status,start_date:e.startDate||null,end_date:e.endDate||null,submission_url:e.submissionUrl||null,notes:e.notes||null,updated_at:new Date().toISOString()}));if(eventRows.length){const {error}=await supabase.from('hacktony_events').upsert(eventRows,{onConflict:'id'});if(error)throw error;}const {data:cloudEvents,error:eventError}=await supabase.from('hacktony_events').select('*').eq('user_id',supabaseUser.id).order('updated_at',{ascending:false});if(eventError)throw eventError;const mergedEvents=new Map(events.map(e=>[e.id,e]));(cloudEvents||[]).forEach((r:any)=>mergedEvents.set(r.id,{id:r.id,name:r.event_name,platform:r.platform,status:r.status,startDate:r.start_date||'',endDate:r.end_date||'',submissionUrl:r.submission_url||'',notes:r.notes||''}));setEvents(Array.from(mergedEvents.values()));const discoveryRows=discoveries.map(d=>({user_id:supabaseUser.id,gmail_message_id:d.id,subject:d.subject,sender:d.from,message_date:d.date,snippet:d.snippet,platform:d.platform,matched_at:d.matchedAt,status:'pending_review'}));if(discoveryRows.length){const {error}=await supabase.from('hacktony_gmail_discoveries').upsert(discoveryRows,{onConflict:'user_id,gmail_message_id'});if(error)throw error;}const {data:cloudDiscoveries,error:discoveryError}=await supabase.from('hacktony_gmail_discoveries').select('*').eq('user_id',supabaseUser.id).eq('status','pending_review').order('matched_at',{ascending:false});if(discoveryError)throw discoveryError;const mergedDiscoveries=new Map(discoveries.map(d=>[d.id,d]));(cloudDiscoveries||[]).forEach((r:any)=>mergedDiscoveries.set(r.gmail_message_id,{id:r.gmail_message_id,subject:r.subject,from:r.sender,date:r.message_date,snippet:r.snippet,platform:r.platform,matchedAt:r.matched_at}));setDiscoveries(Array.from(mergedDiscoveries.values()));setSupabaseMessage('Sync complete. '+mergedEvents.size+' hackathons and '+mergedDiscoveries.size+' pending discoveries available.');}catch(error){setSupabaseMessage(error instanceof Error?error.message:'Cloud sync failed. Check Supabase configuration and migration.');}finally{setSyncBusy(false);}}
+  async function syncCloud(){if(!supabase||!supabaseUser){setSupabaseMessage('Sign in to Supabase first.');return;}setSyncBusy(true);setSupabaseMessage('Syncing your HackTony data…');try{const eventRows=events.map(e=>({id:e.id,user_id:supabaseUser.id,event_name:e.name,platform:e.platform,status:e.status,start_date:e.startDate||null,end_date:e.endDate||null,submission_url:e.submissionUrl||null,notes:e.notes||null,updated_at:new Date().toISOString()}));if(eventRows.length){const {error}=await supabase.from('hacktony_events').upsert(eventRows,{onConflict:'id'});if(error)throw error;}const {data:cloudEvents,error:eventError}=await supabase.from('hacktony_events').select('*').eq('user_id',supabaseUser.id).order('updated_at',{ascending:false});if(eventError)throw eventError;const mergedEvents=new Map(events.map(e=>[e.id,e]));(cloudEvents||[]).forEach((r:any)=>mergedEvents.set(r.id,{id:r.id,name:r.event_name,platform:r.platform,status:r.status,startDate:r.start_date||'',endDate:r.end_date||'',submissionUrl:r.submission_url||'',notes:r.notes||''}));setEvents(Array.from(mergedEvents.values()));const discoveryRows=discoveries.map(d=>({user_id:supabaseUser.id,gmail_message_id:d.id,subject:d.subject,sender:d.from,message_date:d.date,snippet:d.snippet,platform:d.platform,matched_at:d.matchedAt,status:'pending_review'}));if(discoveryRows.length){const {error}=await supabase.from('hacktony_gmail_discoveries').upsert(discoveryRows,{onConflict:'user_id,gmail_message_id'});if(error)throw error;}const {data:cloudDiscoveries,error:discoveryError}=await supabase.from('hacktony_gmail_discoveries').select('*').eq('user_id',supabaseUser.id).eq('status','pending_review').order('matched_at',{ascending:false});if(discoveryError)throw discoveryError;const mergedDiscoveries=new Map(discoveries.map(d=>[d.id,d]));(cloudDiscoveries||[]).forEach((r:any)=>mergedDiscoveries.set(r.gmail_message_id,{id:r.gmail_message_id,subject:r.subject,from:r.sender,date:r.message_date,snippet:r.snippet,platform:r.platform,matchedAt:r.matched_at}));setDiscoveries(Array.from(mergedDiscoveries.values()));
+  const {data:repoPulseConnection,error:repoPulseLoadError}=await supabase.from('app_user_connections').select('metadata').eq('user_id',supabaseUser.id).eq('provider','repopulse').eq('external_account_id','workspace').maybeSingle();
+  if(repoPulseLoadError)throw repoPulseLoadError;
+  const cloudMetadata=(repoPulseConnection?.metadata||{}) as any;
+  const cloudLinks=Array.isArray(cloudMetadata.links)?cloudMetadata.links as RepoPulseLink[]:[];
+  const mergedLinksMap=new Map<string,RepoPulseLink>();
+  cloudLinks.forEach(link=>mergedLinksMap.set(link.eventId,link));
+  projectLinks.forEach(link=>mergedLinksMap.set(link.eventId,link));
+  const mergedProjectLinks=Array.from(mergedLinksMap.values());
+  const effectiveRepoPulseUrl=repoPulseUrl||String(cloudMetadata.app_url||'');
+  setProjectLinks(mergedProjectLinks);
+  setRepoPulseUrl(effectiveRepoPulseUrl);
+  const {error:repoPulseSaveError}=await supabase.from('app_user_connections').upsert({user_id:supabaseUser.id,provider:'repopulse',external_account_id:'workspace',status:'connected',metadata:{app_url:effectiveRepoPulseUrl,links:mergedProjectLinks}},{onConflict:'user_id,provider,external_account_id'});
+  if(repoPulseSaveError)throw repoPulseSaveError;
+  setSupabaseMessage('Sync complete. '+mergedEvents.size+' hackathons, '+mergedDiscoveries.size+' pending discoveries, and '+mergedProjectLinks.length+' RepoPulse links available.');}catch(error){setSupabaseMessage(error instanceof Error?error.message:'Cloud sync failed. Check Supabase configuration and migration.');}finally{setSyncBusy(false);}}
+  async function persistRepoPulseConnection(links:RepoPulseLink[],appUrl:string){
+    if(!supabase||!supabaseUser)return;
+    const {error}=await supabase.from('app_user_connections').upsert({
+      user_id:supabaseUser.id,
+      provider:'repopulse',
+      external_account_id:'workspace',
+      status:'connected',
+      metadata:{app_url:appUrl,links}
+    },{onConflict:'user_id,provider,external_account_id'});
+    if(error)throw error;
+  }
+  function openRepoPulseLinkModal(event:Hackathon){
+    const existing=projectLinks.find(link=>link.eventId===event.id);
+    setLinkDraft({repositoryUrl:existing?.repositoryUrl||'',projectName:existing?.projectName||event.name,branch:existing?.branch||'main'});
+    setRepoPulseMessage('');
+    setLinkingEvent(event);
+  }
+  async function saveRepoPulseLink(e:FormEvent){
+    e.preventDefault();
+    if(!linkingEvent)return;
+    const parsed=parseGitHubRepository(linkDraft.repositoryUrl);
+    if(!parsed){setRepoPulseMessage('Paste a public GitHub repository URL in the format https://github.com/owner/repository.');return;}
+    const link:RepoPulseLink={
+      eventId:linkingEvent.id,
+      eventName:linkingEvent.name,
+      repositoryFullName:parsed.fullName,
+      repositoryUrl:parsed.url,
+      projectName:linkDraft.projectName.trim()||parsed.repo,
+      branch:linkDraft.branch.trim()||'main',
+      linkedAt:new Date().toISOString()
+    };
+    const next=[...projectLinks.filter(item=>item.eventId!==linkingEvent.id),link];
+    setProjectLinks(next);
+    try{
+      await persistRepoPulseConnection(next,repoPulseUrl);
+      setRepoPulseMessage('Repository link saved to your HackTony account.');
+    }catch(error){
+      setRepoPulseMessage('Saved in this browser. Cloud sync failed: '+(error instanceof Error?error.message:'unknown error'));
+    }
+    setLinkingEvent(null);
+  }
+  async function unlinkRepoPulseProject(eventId:string){
+    const next=projectLinks.filter(item=>item.eventId!==eventId);
+    setProjectLinks(next);
+    try{await persistRepoPulseConnection(next,repoPulseUrl);}catch(error){setRepoPulseMessage(error instanceof Error?error.message:'Could not sync the unlink action.');}
+    setLinkingEvent(null);
+  }
+  async function saveRepoPulseAppUrl(){
+    const value=repoPulseUrl.trim();
+    if(value){
+      try{
+        const parsed=new URL(value);
+        if(!['https:','http:'].includes(parsed.protocol))throw new Error();
+      }catch{setRepoPulseMessage('Enter a valid HTTPS app URL, or an HTTP localhost URL for local testing.');return;}
+    }
+    setRepoPulseUrl(value);
+    try{
+      await persistRepoPulseConnection(projectLinks,value);
+      setRepoPulseMessage(value?'RepoPulse app URL saved. Deep links are enabled.':'RepoPulse app URL cleared. Repository associations remain saved.');
+    }catch(error){
+      setRepoPulseMessage('Saved in this browser. Cloud sync failed: '+(error instanceof Error?error.message:'unknown error'));
+    }
+  }
   async function signOutCloud(){if(!supabase)return;const {error}=await supabase.auth.signOut();setSupabaseMessage(error?error.message:'Signed out.');setSupabaseUser(null);}
   function saveClientId(){const clean=clientId.trim();localStorage.setItem(CLIENT_KEY,clean);setClientId(clean);setGmailMessage(clean?'Google OAuth Client ID saved on this browser.':'Client ID cleared.');}
   function loadGis():Promise<void>{return new Promise((resolve,reject)=>{const w=window as any;if(w.google?.accounts?.oauth2){resolve();return;}const existing=document.querySelector('script[data-google-gis]') as HTMLScriptElement|null;if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('Google Identity script failed to load')),{once:true});return;}const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;script.defer=true;script.dataset.googleGis='true';script.onload=()=>resolve();script.onerror=()=>reject(new Error('Google Identity script failed to load'));document.head.appendChild(script);});}
@@ -191,8 +305,8 @@ export default function App(){
       if(error)setSupabaseMessage(error.message);
     }
   }
-  async function deleteHackathon(id:string){setEvents(prev=>prev.filter(ev=>ev.id!==id));if(supabase&&supabaseUser){const {error}=await supabase.from('hacktony_events').delete().eq('user_id',supabaseUser.id).eq('id',id);if(error)setSupabaseMessage(error.message);}}
-  async function clearAllData(){if(supabase&&supabaseUser){const [eventsDelete,discoveryDelete]=await Promise.all([supabase.from('hacktony_events').delete().eq('user_id',supabaseUser.id),supabase.from('hacktony_gmail_discoveries').delete().eq('user_id',supabaseUser.id)]);if(eventsDelete.error||discoveryDelete.error){setSupabaseMessage(eventsDelete.error?.message||discoveryDelete.error?.message||'Cloud delete failed');return;}}setEvents([]);setDiscoveries([]);localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(DISCOVERY_KEY);setSupabaseMessage('Local and connected cloud data cleared.');}
+  async function deleteHackathon(id:string){setEvents(prev=>prev.filter(ev=>ev.id!==id));const nextLinks=projectLinks.filter(link=>link.eventId!==id);setProjectLinks(nextLinks);try{await persistRepoPulseConnection(nextLinks,repoPulseUrl);}catch(error){setRepoPulseMessage(error instanceof Error?error.message:'Could not sync removed project link.');}if(supabase&&supabaseUser){const {error}=await supabase.from('hacktony_events').delete().eq('user_id',supabaseUser.id).eq('id',id);if(error)setSupabaseMessage(error.message);}}
+  async function clearAllData(){if(supabase&&supabaseUser){const [eventsDelete,discoveryDelete]=await Promise.all([supabase.from('hacktony_events').delete().eq('user_id',supabaseUser.id),supabase.from('hacktony_gmail_discoveries').delete().eq('user_id',supabaseUser.id)]);if(eventsDelete.error||discoveryDelete.error){setSupabaseMessage(eventsDelete.error?.message||discoveryDelete.error?.message||'Cloud delete failed');return;}}setEvents([]);setDiscoveries([]);setProjectLinks([]);setRepoPulseUrl('');localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(DISCOVERY_KEY);localStorage.removeItem(PROJECT_LINKS_KEY);localStorage.removeItem(REPOPULSE_URL_KEY);if(supabase&&supabaseUser){const {error}=await supabase.from('app_user_connections').delete().eq('user_id',supabaseUser.id).eq('provider','repopulse').eq('external_account_id','workspace');if(error)setSupabaseMessage(error.message);}setSupabaseMessage('Local and connected cloud data cleared.');}
   async function importFromUrl(e:FormEvent){
     e.preventDefault();
     const url=eventUrl.trim();
