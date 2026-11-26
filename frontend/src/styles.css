@@ -7,3 +7,47 @@
 
 /* Real integration/settings screens */
 .integration-message{margin:10px 18px;padding:10px 12px;border:1px solid #e7e4fb;background:#f7f5ff;color:#6555d4;border-radius:8px;font-size:11px;line-height:1.5}.discovery-list{padding:6px 0}.discovery-card{display:flex;align-items:flex-start;gap:12px;padding:15px 10px;border-bottom:1px solid #eff1f4}.discovery-icon{width:34px;height:34px;border-radius:9px;background:#f1efff;color:#6c5ce7;display:grid;place-items:center;flex-shrink:0}.discovery-body{flex:1;min-width:0}.discovery-body strong{display:block;font-size:12px;color:#303541;line-height:1.5}.discovery-body small{display:block;color:#8c94a0;font-size:10px;margin-top:3px;word-break:break-word}.discovery-body p{margin:6px 0 0;color:#818995;font-size:11px;line-height:1.5}.discovery-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.discovery-actions .secondary-button{margin:0;white-space:nowrap}.settings-panel{padding:20px}.settings-block{padding:18px 0;border-top:1px solid #eff1f4}.settings-block:first-of-type{border-top:0}.settings-block label{display:grid;gap:7px;font-size:12px;font-weight:600;color:#59616e;max-width:680px}.settings-block input{border:1px solid #e3e6ed;border-radius:8px;padding:10px;font:inherit;font-size:12px}.settings-block p{font-size:11px;color:#8c94a0;line-height:1.65;max-width:760px}.settings-actions{display:flex;gap:8px;flex-wrap:wrap}.settings-actions button,.settings-block>.secondary-button{margin:0}.settings-block h3,.help-content h3{font-size:13px;color:#303541;margin:0 0 8px}.danger-button{color:#b84343;border-color:#f1dada}.help-content{padding:20px 24px;font-size:12px;color:#6e7683;line-height:1.7}.help-content ol{padding-left:22px}.help-content code{background:#f4f5f7;padding:2px 4px;border-radius:4px}@media(max-width:700px){.discovery-card{flex-wrap:wrap}.discovery-actions{width:100%;margin-left:46px}.settings-actions{flex-direction:column;align-items:flex-start}}
+
+
+/* Upcoming hackathon discovery carousel */
+.featured-discovery{margin:0 0 20px;background:linear-gradient(120deg,#fff 0%,#fbfaff 58%,#f5f3ff 100%);border:1px solid #e9e6fb;border-radius:14px;padding:18px 18px 14px;overflow:hidden}
+.featured-discovery-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.featured-eyebrow{display:flex;align-items:center;gap:6px;color:#7869d9;font-size:9px;font-weight:800;letter-spacing:1.2px;margin-bottom:7px}
+.featured-discovery-heading h2{font-family:Manrope,sans-serif;font-size:17px;color:#292d38;margin:0}
+.featured-discovery-heading p{font-size:11px;color:#8d94a0;margin:5px 0 0}
+.featured-carousel-controls{display:flex;align-items:center;gap:7px}
+.featured-count{font-size:10px;color:#969daa;font-variant-numeric:tabular-nums;margin-right:3px}
+.featured-carousel-controls button{width:31px;height:31px;display:grid;place-items:center;border:1px solid #e6e3f4;border-radius:8px;color:#6555d4;background:#fff}
+.featured-carousel-controls button:disabled{opacity:.38;cursor:not-allowed}
+.featured-filters{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 12px}
+.featured-filters button{border:1px solid #e9eaf0;background:#fff;color:#7d8490;border-radius:20px;padding:6px 10px;font-size:10px}
+.featured-filters button.active{background:#eeeaff;border-color:#ddd7ff;color:#5f50cb;font-weight:700}
+.featured-carousel-track{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#d9d4f4 transparent;padding:1px 1px 12px;overscroll-behavior-x:contain}
+.featured-hackathon-card{flex:0 0 310px;min-height:330px;scroll-snap-align:start;background:#fff;border:1px solid #e9ebf1;border-radius:12px;padding:14px;display:flex;flex-direction:column;box-shadow:0 3px 12px rgba(39,43,57,.035)}
+.featured-card-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
+.featured-format{display:inline-flex;align-items:center;border-radius:20px;padding:4px 8px;background:#f0edff;color:#6656d4;font-size:9px;font-weight:700;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.featured-format.inperson{background:#fff3e9;color:#b76a31}
+.featured-format.hybrid{background:#eaf6f4;color:#398575}
+.featured-countdown{color:#8e95a1;font-size:9px;white-space:nowrap}
+.featured-date{display:flex;align-items:center;gap:6px;color:#6d5bd5;font-size:10px;font-weight:700;margin-top:12px}
+.featured-hackathon-card h3{font-family:Manrope,sans-serif;font-size:15px;line-height:1.35;color:#2e3340;margin:9px 0 4px;min-height:40px}
+.featured-organizer{font-size:10px;color:#858d99}
+.featured-organizer span{padding:0 3px;color:#c0c4cc}
+.featured-description{font-size:10px;line-height:1.55;color:#7d8592;margin:10px 0 11px;min-height:47px}
+.featured-details{display:grid;gap:6px;margin-top:auto}
+.featured-details span{display:flex;align-items:center;gap:6px;color:#68717e;font-size:10px}
+.featured-details svg{color:#8b80df;flex-shrink:0}
+.featured-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.featured-tags span{font-size:9px;color:#797f8b;background:#f5f6f8;border-radius:5px;padding:4px 6px}
+.featured-eligibility{font-size:9px;line-height:1.45;color:#9097a2;margin:9px 0 10px;min-height:26px}
+.featured-card-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #f0f1f4;padding-top:10px}
+.featured-card-actions a{display:inline-flex;align-items:center;gap:5px;color:#6555d4;text-decoration:none;font-size:10px;font-weight:700}
+.featured-card-actions button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:32px;border:0;border-radius:7px;padding:7px 9px;background:#6958db;color:#fff;font-size:10px;font-weight:700;white-space:nowrap}
+.featured-card-actions button:disabled{background:#edf6f0;color:#43835c;cursor:default}
+.featured-registration-note{font-size:9px;line-height:1.4;color:#999faa;margin:8px 0 0}
+.featured-source-link{font-size:9px;color:#a0a6b0;text-decoration:underline;text-underline-offset:2px;margin-top:5px;align-self:flex-start}
+.featured-discovery-footnote{font-size:9px;line-height:1.5;color:#9ba2ad;padding-top:3px}
+.featured-empty{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#8d86d9}
+.featured-empty strong{font-size:11px;color:#5a6170}
+.featured-empty span{font-size:10px;color:#9ca3ad}
+@media(max-width:600px){.featured-discovery{padding:14px 12px}.featured-hackathon-card{flex-basis:275px;min-height:350px}.featured-discovery-heading h2{font-size:15px}.featured-carousel-controls button{width:29px;height:29px}}
