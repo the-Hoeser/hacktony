@@ -35,6 +35,7 @@ function buildRepoPulseDeepLink(baseUrl:string,link:RepoPulseLink){
     url.searchParams.set('source','hacktony');
     url.searchParams.set('hackathon',link.eventName);
     url.searchParams.set('hackathonId',link.eventId);
+    if(link.branch)url.searchParams.set('branch',link.branch);
     return url.toString();
   }catch{return '';}
 }
