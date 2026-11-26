@@ -15,7 +15,7 @@ const ALLOWED_DOMAINS = [
 ];
 
 const isAllowedHost = (hostname) => {
-  const host = hostname.toLowerCase().replace(/\\.$/, "");
+  const host = hostname.toLowerCase().replace(/\.$/, "");
   return ALLOWED_DOMAINS.some((domain) => host === domain || host.endsWith("." + domain));
 };
 
@@ -28,11 +28,11 @@ const isPrivateHost = (hostname) => {
     || host.startsWith("10.")
     || host.startsWith("192.168.")
     || host.startsWith("169.254.")
-    || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(host)
     || host === "::1"
     || host.startsWith("fc")
     || host.startsWith("fd")
-    || /^\\d{1,3}(?:\\.\\d{1,3}){3}$/.test(host);
+    || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host);
 };
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
@@ -41,21 +41,21 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 
 const strip = (value = "") => String(value)
-  .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
-  .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
+  .replace(/<script[\s\S]*?<\/script>/gi, " ")
+  .replace(/<style[\s\S]*?<\/style>/gi, " ")
   .replace(/<[^>]*>/g, " ")
   .replace(/&amp;/g, "&")
   .replace(/&quot;/g, '"')
   .replace(/&#39;|&apos;/g, "'")
   .replace(/&nbsp;/g, " ")
-  .replace(/&#(\\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+  .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
   .replace(/&lt;/g, "<")
   .replace(/&gt;/g, ">")
-  .replace(/\\s+/g, " ")
+  .replace(/\s+/g, " ")
   .trim();
 
 function meta(html, wanted) {
-  for (const match of html.matchAll(/<meta\\b[^>]*>/gi)) {
+  for (const match of html.matchAll(/<meta\b[^>]*>/gi)) {
     const tag = match[0];
     const key = tag.match(/(?:property|name)=["']([^"']+)["']/i)?.[1]?.toLowerCase();
     const content = tag.match(/content=["']([^"']*)["']/i)?.[1];
@@ -65,7 +65,7 @@ function meta(html, wanted) {
 }
 
 function readJsonLd(html) {
-  for (const match of html.matchAll(/<script[^>]+type=["']application\\/ld\\+json["'][^>]*>([\\s\\S]*?)<\\/script>/gi)) {
+  for (const match of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       const parsed = JSON.parse(match[1]);
       const candidates = Array.isArray(parsed) ? parsed : parsed?.["@graph"] || [parsed];
@@ -84,14 +84,14 @@ function readJsonLd(html) {
 function asDate(value) {
   if (!value) return "";
   const text = String(value);
-  const dateOnly = text.match(/^\\d{4}-\\d{2}-\\d{2}/)?.[0];
+  const dateOnly = text.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
   if (dateOnly) return dateOnly;
   const parsed = new Date(text);
   return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
 }
 
 function platformName(hostname) {
-  const host = hostname.replace(/^www\\./i, "").toLowerCase();
+  const host = hostname.replace(/^www\./i, "").toLowerCase();
   const names = {
     "devpost.com": "Devpost",
     "unstop.com": "Unstop",
@@ -178,7 +178,7 @@ export default async (request) => {
     }
     const html = (await response.text()).slice(0, 2_000_000);
     const structured = readJsonLd(html);
-    const name = strip(structured.name || meta(html, "og:title") || html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1] || "");
+    const name = strip(structured.name || meta(html, "og:title") || html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "");
     if (!name) return json({ error: "I couldn't identify the event name. This platform may need a dedicated parser; you can still add it manually." }, 422);
 
     const description = strip(structured.description || meta(html, "og:description") || meta(html, "description")).slice(0, 1600);
