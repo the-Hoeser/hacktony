@@ -31,7 +31,8 @@ function parseGitHubRepository(input:string){
 function buildRepoPulseDeepLink(baseUrl:string,link:RepoPulseLink){
   try{
     const url=new URL(baseUrl.trim());
-    if(!['https:','http:'].includes(url.protocol))return '';
+    const localHttp=url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname);
+    if(url.protocol!=='https:'&&!localHttp)return '';
     url.searchParams.set('repo',link.repositoryFullName);
     url.searchParams.set('source','hacktony');
     url.searchParams.set('hackathon',link.eventName);
@@ -283,7 +284,8 @@ export default function App(){
     if(value){
       try{
         const parsed=new URL(value);
-        if(!['https:','http:'].includes(parsed.protocol))throw new Error();
+        const localHttp=parsed.protocol==='http:'&&['localhost','127.0.0.1'].includes(parsed.hostname);
+        if(parsed.protocol!=='https:'&&!localHttp)throw new Error();
       }catch{setRepoPulseMessage('Enter a valid HTTPS app URL, or an HTTP localhost URL for local testing.');return;}
     }
     setRepoPulseUrl(value);
