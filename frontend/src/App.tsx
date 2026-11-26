@@ -53,7 +53,9 @@ function groupDiscoveries(messages:Discovery[]):DiscoveryGroup[]{
   const grouped=new Map<string,Discovery[]>();
   for(const message of messages){
     const name=inferEventName(message.subject);
-    const key=normalizeEventName(name)||('message '+message.id);
+    const normalized=normalizeEventName(name);
+    const generic=['hackathon','competition','event','registration','submission'].includes(normalized);
+    const key=generic?'message '+message.id:(normalized||('message '+message.id));
     const list=grouped.get(key)||[];
     list.push(message);
     grouped.set(key,list);
@@ -160,7 +162,8 @@ export default function App(){
   }
   async function importDiscoveryGroup(group:DiscoveryGroup){
     const existing=events.find(event=>normalizeEventName(event.name)===group.key);
-    const evidence=group.messages.map(message=>'['+message.date+'] '+message.subject+' — '+message.from+'\n'+message.snippet).join('\n\n');
+    const selectedEvidence=group.messages.slice(0,20);
+    const evidence=selectedEvidence.map(message=>'['+message.date+'] '+message.subject+' — '+message.from+'\n'+message.snippet).join('\n\n')+(group.messages.length>selectedEvidence.length?'\n\n'+(group.messages.length-selectedEvidence.length)+' additional related messages were grouped.':'');
     if(existing){
       const nextStatus=STATUS_RANK[group.suggestedStatus]>STATUS_RANK[existing.status]?group.suggestedStatus:existing.status;
       setEvents(prev=>prev.map(event=>event.id===existing.id?{...event,status:nextStatus,notes:[event.notes,'Historical Gmail evidence ('+group.messages.length+' messages):',evidence].filter(Boolean).join('\n\n')}:event));
