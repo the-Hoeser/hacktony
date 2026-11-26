@@ -66,3 +66,13 @@
 .manual-entry-divider{display:flex;align-items:center;gap:10px;color:#a0a6b0;font-size:9px;font-weight:700;letter-spacing:.8px;margin:16px 0 13px}
 .manual-entry-divider:before,.manual-entry-divider:after{content:"";height:1px;background:#edf0f3;flex:1}
 @media(max-width:560px){.link-import-form{grid-template-columns:1fr}.link-import-form .primary-button{justify-content:center}}
+
+
+/* Historical Gmail grouping and batch scan controls */
+.discovery-header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.discovery-header-actions .primary-button,.discovery-header-actions .secondary-button{margin:0;white-space:nowrap}
+.discovery-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 10px;border-top:1px solid #eef0f3}
+.discovery-pagination span{font-size:10px;color:#9299a4}
+.discovery-pagination .secondary-button{margin:0}
+.discovery-body p b{display:inline-block;color:#6858d8;font-weight:700;margin-bottom:3px}
+@media(max-width:650px){.panel-header{gap:10px;flex-wrap:wrap}.discovery-header-actions{width:100%;justify-content:flex-start}.discovery-pagination{align-items:flex-start;flex-direction:column}}
