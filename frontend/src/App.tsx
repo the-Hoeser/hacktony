@@ -112,6 +112,7 @@ export default function App(){
       const rows:Discovery[]=[];
       let cursor=pageToken||'';
       let pagesScanned=0;
+      let messagesChecked=0;
       let hasMore=true;
       const headers={Authorization:'Bearer '+token};
       while(pagesScanned<3&&hasMore){
@@ -120,6 +121,7 @@ export default function App(){
         if(!listRes.ok)throw new Error('Gmail search failed ('+listRes.status+'). Check Gmail API access and try reconnecting.');
         const list=await listRes.json();
         const ids=list.messages||[];
+        messagesChecked+=ids.length;
         for(let offset=0;offset<ids.length;offset+=10){
           const batch=ids.slice(offset,offset+10);
           const fetched=await Promise.all(batch.map(async(item:any)=>{
@@ -131,8 +133,8 @@ export default function App(){
             const subject=get('Subject');
             const from=get('From');
             const hay=(subject+' '+from+' '+(message.snippet||'')).toLowerCase();
-            if(!/(hackathon|devpost|unstop|hackerearth|devfolio|major league hacking|\\bmlh\\b|competition|submission|finalist|winner|participation certificate)/.test(hay))return null;
-            const platform=from.match(/@([^>\\s]+)/)?.[1]||'Email';
+            if(!/(hackathon|devpost|unstop|hackerearth|devfolio|major league hacking|\bmlh\b|competition|submission|finalist|winner|participation certificate)/.test(hay))return null;
+            const platform=from.match(/@([^>\s]+)/)?.[1]||'Email';
             return {id:message.id,subject:subject||'(no subject)',from,date:get('Date'),snippet:message.snippet||'',platform,matchedAt:new Date().toISOString()} as Discovery;
           }));
           fetched.forEach((item)=>{if(item)rows.push(item);});
@@ -148,7 +150,7 @@ export default function App(){
         return Array.from(merged.values()).sort((a,b)=>(Date.parse(b.date)||0)-(Date.parse(a.date)||0));
       });
       setGmailNextPageToken(cursor);
-      setGmailMessage('Scanned '+pagesScanned+' page(s), checked '+(pagesScanned*100)+' possible messages, and found '+rows.length+' matching emails. They are grouped into '+groupDiscoveries(rows).length+' event candidates. '+(cursor?'More older messages are available to scan.':'No older matching messages remain for this search.'));
+      setGmailMessage('Scanned '+pagesScanned+' page(s), checked '+messagesChecked+' possible messages, and found '+rows.length+' matching emails. They are grouped into '+groupDiscoveries(rows).length+' event candidates. '+(cursor?'More older messages are available to scan.':'No older matching messages remain for this search.'));
       setPage('Email discoveries');
     }catch(err){
       setGmailMessage(err instanceof Error?err.message:'Gmail history scan failed.');
@@ -181,7 +183,6 @@ export default function App(){
       if(error)setSupabaseMessage(error.message);
     }
   }
-  async function dismissDiscovery(id:string){setDiscoveries(prev=>prev.filter(x=>x.id!==id));if(supabase&&supabaseUser){const {error}=await supabase.from('hacktony_gmail_discoveries').update({status:'dismissed'}).eq('user_id',supabaseUser.id).eq('gmail_message_id',id);if(error)setSupabaseMessage(error.message);}}
   async function deleteHackathon(id:string){setEvents(prev=>prev.filter(ev=>ev.id!==id));if(supabase&&supabaseUser){const {error}=await supabase.from('hacktony_events').delete().eq('user_id',supabaseUser.id).eq('id',id);if(error)setSupabaseMessage(error.message);}}
   async function clearAllData(){if(supabase&&supabaseUser){const [eventsDelete,discoveryDelete]=await Promise.all([supabase.from('hacktony_events').delete().eq('user_id',supabaseUser.id),supabase.from('hacktony_gmail_discoveries').delete().eq('user_id',supabaseUser.id)]);if(eventsDelete.error||discoveryDelete.error){setSupabaseMessage(eventsDelete.error?.message||discoveryDelete.error?.message||'Cloud delete failed');return;}}setEvents([]);setDiscoveries([]);localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(DISCOVERY_KEY);setSupabaseMessage('Local and connected cloud data cleared.');}
   async function importFromUrl(e:FormEvent){
