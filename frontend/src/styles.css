@@ -87,3 +87,7 @@
 .repo-link-info{font-size:10px;line-height:1.55;color:#7d8794;background:#f6f7fa;border:1px solid #eceef2;border-radius:8px;padding:10px 11px}
 @media(max-width:780px){.event-card{flex-wrap:wrap;align-items:flex-start}.event-info{flex:1 1 calc(100% - 60px)}.repopulse-event-link{flex:1 1 100%;margin-left:49px;flex-direction:row;align-items:center;flex-wrap:wrap;gap:10px}.status-select{margin-left:49px}}
 @media(max-width:520px){.repopulse-event-link{margin-left:0}.status-select{margin-left:0}.event-card{gap:9px}.event-info small{display:block;max-height:36px;overflow:hidden}}
+
+
+.repopulse-progress-status{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;background:#f4f3ff;color:#7465bb!important;font-variant-numeric:tabular-nums}
+.repopulse-progress-status b{color:#5545c5;font-size:10px}
