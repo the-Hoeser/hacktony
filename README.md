@@ -7,6 +7,8 @@ Run the first version on free tiers. Keep Gmail access read-only, filter emails 
 
 ## Current MVP features
 - Overview carousel with curated upcoming India hackathons, event-type filters, organiser links, and one-click add-to-tracker
+- Paste-link event import for supported public event pages, with an editable preview and manual-entry fallback
+- Overview carousel with curated upcoming India hackathons, event-type filters, organiser links, and one-click add-to-tracker
 
 - Manual hackathon tracking (name, platform, dates, status, submission link, notes)
 - Local browser persistence, search, status changes, delete, export
