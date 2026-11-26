@@ -12,7 +12,7 @@ Run the first version on free tiers. Keep Gmail access read-only, filter emails 
 
 - Manual hackathon tracking (name, platform, dates, status, submission link, notes)
 - Local browser persistence, search, status changes, delete, export
-- Gmail read-only OAuth discovery and review/import/dismiss queue
+- Gmail read-only historical scanning in paginated batches, grouped event candidates, and evidence-based suggested statuses
 - Supabase magic-link sign-in and manual cloud sync (requires Netlify env vars)
 - Owner-scoped RLS tables for tracker events and Gmail discoveries
 - CI frontend typecheck/build validation
