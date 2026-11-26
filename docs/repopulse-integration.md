@@ -41,3 +41,14 @@ If the linked repository is not visible to the connected GitHub account, RepoPul
 ## Progress integration boundary
 
 This first milestone is linkage and deep navigation only. It does not yet read RepoPulse progress summaries into HackTony. That is the next milestone: a read-only, intentionally limited progress summary contract. RepoPulse continues to calculate progress from Markdown, and HackTony will not duplicate or guess that calculation.
+
+
+## Read-only progress summary
+
+Once RepoPulse is deployed with its Netlify Function, HackTony can call:
+
+`GET <RepoPulse app URL>/.netlify/functions/project-progress?repo=owner/name&branch=optional`
+
+The request sends only the public GitHub repository full name and optional branch. It does not send a GitHub token. RepoPulse reads public GitHub repository metadata, the matching Markdown plan/checklist and optional latest commit, then calculates progress using the same `parseMarkdownPlan` and `progressFromPhases` source as the RepoPulse UI.
+
+HackTony displays the returned task count and percentage as read-only data. If the plan is missing, empty, or the endpoint is unavailable, HackTony shows an unavailable/no-checklist status rather than guessing. GitHub's unauthenticated API rate limit applies. The endpoint allows CORS only from HackTony production and local development origins.
