@@ -76,3 +76,14 @@
 .discovery-pagination .secondary-button{margin:0}
 .discovery-body p b{display:inline-block;color:#6858d8;font-weight:700;margin-bottom:3px}
 @media(max-width:650px){.panel-header{gap:10px;flex-wrap:wrap}.discovery-header-actions{width:100%;justify-content:flex-start}.discovery-pagination{align-items:flex-start;flex-direction:column}}
+
+
+/* RepoPulse project linkage */
+.repopulse-event-link{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:0 0 142px;min-width:0}
+.repopulse-event-link span{display:flex;align-items:center;gap:5px;max-width:100%;font-size:9px;color:#828998;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.repopulse-event-link span svg{flex-shrink:0;color:#7868d9}
+.repopulse-event-link a,.repopulse-event-link button{display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;color:#6857d5;text-decoration:none;font-size:10px;font-weight:700;padding:2px 0;cursor:pointer}
+.repopulse-event-link button.relink-button{color:#9299a4;font-weight:500}
+.repo-link-info{font-size:10px;line-height:1.55;color:#7d8794;background:#f6f7fa;border:1px solid #eceef2;border-radius:8px;padding:10px 11px}
+@media(max-width:780px){.event-card{flex-wrap:wrap;align-items:flex-start}.event-info{flex:1 1 calc(100% - 60px)}.repopulse-event-link{flex:1 1 100%;margin-left:49px;flex-direction:row;align-items:center;flex-wrap:wrap;gap:10px}.status-select{margin-left:49px}}
+@media(max-width:520px){.repopulse-event-link{margin-left:0}.status-select{margin-left:0}.event-card{gap:9px}.event-info small{display:block;max-height:36px;overflow:hidden}}
