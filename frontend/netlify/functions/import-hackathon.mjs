@@ -1,6 +1,6 @@
 const isPrivateHost = (host) => {
   const h = host.toLowerCase();
-  return h === "localhost" || h.endsWith(".localhost") || h === "127.0.0.1" || h.startsWith("127.") || h === "0.0.0.0" || h.startsWith("10.") || h.startsWith("192.168.") || /^172\.(1[6-9]|2\d|3[01])\./.test(h) || h === "::1" || h.startsWith("fc") || h.startsWith("fd");
+  return h === "localhost" || h.endsWith(".localhost") || h === "127.0.0.1" || h.startsWith("127.") || h === "0.0.0.0" || h.startsWith("10.") || h.startsWith("192.168.") || h.startsWith("169.254.") || /^172\.(1[6-9]|2\d|3[01])\./.test(h) || h === "::1" || h.startsWith("fc") || h.startsWith("fd");
 };
 const strip = (s = "") => String(s).replace(/<[^>]*>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 function meta(html, wanted) {
@@ -36,7 +36,7 @@ export default async (request) => {
     if (!url || typeof url !== "string") return new Response(JSON.stringify({error:"Paste a valid event URL"}), {status:400,headers:{"content-type":"application/json"}});
     const parsed = new URL(url);
     if (!["http:","https:"].includes(parsed.protocol) || isPrivateHost(parsed.hostname)) return new Response(JSON.stringify({error:"Only public HTTP/HTTPS event pages are supported"}), {status:400,headers:{"content-type":"application/json"}});
-    const res = await fetch(parsed.href, {headers:{"User-Agent":"HackTony Event Importer/1.0","Accept":"text/html,application/xhtml+xml"},redirect:"follow"});
+    let current = parsed;\n    let res;\n    for (let hop = 0; hop < 4; hop++) {\n      if (isPrivateHost(current.hostname)) return new Response(JSON.stringify({error:"Redirect to a private host blocked"}), {status:400,headers:{"content-type":"application/json"}});\n      res = await fetch(current.href, {headers:{"User-Agent":"HackTony Event Importer/1.0","Accept":"text/html,application/xhtml+xml"},redirect:"manual"});\n      if (![301,302,303,307,308].includes(res.status)) break;\n      const location = res.headers.get("location");\n      if (!location) break;\n      current = new URL(location,current);\n      if (hop === 3) return new Response(JSON.stringify({error:"Too many redirects"}), {status:422,headers:{"content-type":"application/json"}});\n    }
     if (!res.ok) return new Response(JSON.stringify({error:"Event page returned HTTP "+res.status+"; try another public URL"}), {status:422,headers:{"content-type":"application/json"}});
     const html = (await res.text()).slice(0,1_500_000);
     const ld = findJsonLd(html) || {};
