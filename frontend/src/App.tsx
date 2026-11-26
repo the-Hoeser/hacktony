@@ -17,8 +17,9 @@ const STATUS_RANK:Record<Hackathon['status'],number>={Interested:0,Registered:1,
 function normalizeEventName(value:string){
   return value.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 }
-function inferEventName(subject:string){
-  let value=subject.replace(/^\s*(?:(?:re|fw|fwd)\s*:\s*)+/ig,'').replace(/^\[[^\]]+\]\s*/,'').trim();
+function inferEventName(subject:string,snippet=''){
+  const original=subject.trim();
+  let value=original.replace(/^\s*(?:(?:re|fw|fwd)\s*:\s*)+/ig,'').replace(/^\[[^\]]+\]\s*/,'').trim();
   const leading=[
     /^(?:registration\s+(?:confirmed|confirmation)|you(?:'re| are)\s+(?:successfully\s+)?registered|successfully\s+registered|thanks\s+for\s+registering)\s*(?:for|to|at)?\s*[:\-–—]?\s*/i,
     /^(?:submission\s+(?:received|confirmation)|we\s+received\s+your\s+submission|project\s+submitted|thanks\s+for\s+submitting)\s*(?:for|to|in)?\s*[:\-–—]?\s*/i,
@@ -30,14 +31,18 @@ function inferEventName(subject:string){
   value=value.replace(/\s+(?:registration\s+(?:is\s+)?confirmed|registration\s+confirmation|submission\s+(?:received|confirmation)|submission\s+successful|application\s+received)\s*$/i,'');
   value=value.replace(/\s*[-|:–—]\s*(?:Devpost|Unstop|HackerEarth|Devfolio|MLH)\s*$/i,'');
   value=value.replace(/^[\s:|–—-]+|[\s:|–—-]+$/g,'').trim();
-  return value || subject.trim();
+  const generic=['hackathon','competition','event','registration','submission'];
+  if(value&&!generic.includes(normalizeEventName(value)))return value;
+  const fromSnippet=snippet.match(/(?:registered|registration confirmed|registration successful|submitted|submission received|participating|selected|shortlisted|finalist|winner|certificate of participation)\s+(?:for|to|in|at)\s+(?:the\s+)?([^.!?;\n]{4,100})/i)?.[1]?.trim();
+  if(fromSnippet&&!generic.includes(normalizeEventName(fromSnippet)))return fromSnippet.replace(/\s+on\s+(?:Devpost|Unstop|HackerEarth|Devfolio).*$/i,'').trim();
+  return value||original;
 }
 function inferredStatus(messages:Discovery[]):Hackathon['status']{
   const text=messages.map(m=>m.subject+' '+m.snippet).join(' ').toLowerCase();
-  if(/\b(winner|won|finalist|shortlisted|shortlist|certificate of participation|participation certificate|prize winner|award recipient)\b/.test(text))return 'Completed';
+  if(/\b(winner|won|finalist|certificate of participation|participation certificate|prize winner|award recipient)\b/.test(text))return 'Completed';
   if(/\b(submitted|submission received|submission successful|project uploaded|submission confirmation|your project is live)\b/.test(text))return 'Submitted';
   if(/\b(registered|registration confirmed|registration successful|ticket confirmed|successfully enrolled)\b/.test(text))return 'Registered';
-  if(/\b(accepted|invited|team created|team formation|welcome to the hackathon|participating in)\b/.test(text))return 'In progress';
+  if(/\b(accepted|invited|shortlisted|shortlist|team created|team formation|welcome to the hackathon|participating in)\b/.test(text))return 'In progress';
   return 'Interested';
 }
 function displayPlatform(platform:string){
@@ -52,7 +57,7 @@ function displayPlatform(platform:string){
 function groupDiscoveries(messages:Discovery[]):DiscoveryGroup[]{
   const grouped=new Map<string,Discovery[]>();
   for(const message of messages){
-    const name=inferEventName(message.subject);
+    const name=inferEventName(message.subject,message.snippet);
     const normalized=normalizeEventName(name);
     const generic=['hackathon','competition','event','registration','submission'].includes(normalized);
     const key=generic?'message '+message.id:(normalized||('message '+message.id));
@@ -62,7 +67,7 @@ function groupDiscoveries(messages:Discovery[]):DiscoveryGroup[]{
   }
   return Array.from(grouped.entries()).map(([key,items])=>{
     const sorted=[...items].sort((a,b)=>Date.parse(b.date||'')-Date.parse(a.date||''));
-    const name=inferEventName(sorted[0]?.subject||'Hackathon');
+    const name=inferEventName(sorted[0]?.subject||'Hackathon',sorted[0]?.snippet||'');
     return {key,name,platform:displayPlatform(sorted[0]?.platform||'Email'),messages:sorted,suggestedStatus:inferredStatus(sorted),latestDate:sorted[0]?.date||''};
   }).sort((a,b)=>(Date.parse(b.latestDate||'')||0)-(Date.parse(a.latestDate||'')||0));
 }
